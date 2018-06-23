@@ -34,20 +34,20 @@ BOOL APIENTRY DllMain(HINSTANCE hModule,
 		lpcwTemp = s2ws(UWM_HCBT_CREATEWND);
 		UWM_HCBT_CREATEWND_ID = ::RegisterWindowMessage(lpcwTemp.c_str());
 
-		lpcwTemp = s2ws(UWM_HCBT_ACTIVATE);
+		lpcwTemp = s2ws(UWM_HSHELL_WINDOWCREATED);
+		UWM_HSHELL_WINDOWCREATED_ID = ::RegisterWindowMessage(lpcwTemp.c_str());
+
+		/*lpcwTemp = s2ws(UWM_HCBT_ACTIVATE);
 		UWM_HCBT_ACTIVATEWND_ID = ::RegisterWindowMessage(lpcwTemp.c_str());
 
 		lpcwTemp = s2ws(UWM_HCBT_SYSCOMMAND);
-		UWM_HCBT_SYSCOMMAND_ID = ::RegisterWindowMessage(lpcwTemp.c_str());
-
-		lpcwTemp = s2ws(UWM_HSHELL_WINDOWCREATED);
-		UWM_HSHELL_WINDOWCREATED_ID = ::RegisterWindowMessage(lpcwTemp.c_str());
+		UWM_HCBT_SYSCOMMAND_ID = ::RegisterWindowMessage(lpcwTemp.c_str());		
 
 		lpcwTemp = s2ws(UWM_HSHELL_REDRAW);
 		UWM_HSHELL_REDRAW_ID = ::RegisterWindowMessage(lpcwTemp.c_str());
 
 		lpcwTemp = s2ws(UWM_HSHELL_WINDOWREPLACED);
-		UWM_HSHELL_WINDOWREPLACED_ID = ::RegisterWindowMessage(lpcwTemp.c_str());
+		UWM_HSHELL_WINDOWREPLACED_ID = ::RegisterWindowMessage(lpcwTemp.c_str());*/
 		break;
 		//**********************************************
 		// PROCESS_DETACH
@@ -193,19 +193,19 @@ static LRESULT CALLBACK CBTMsgProc(UINT nCode, WPARAM wParam, LPARAM lParam)
 		break;
 		/*case HCBT_DESTROYWND:
 			PostMessage(hWndServer, UWM_HCBT_DESTROYWND_ID, wParam, lParam);
-			break;*/
+			break;
 	case HCBT_ACTIVATE:
 		PostMessage(hWndServer, UWM_HCBT_ACTIVATEWND_ID, wParam, lParam);
-		break;/*
+		break;
 	case HCBT_CLICKSKIPPED:
 		PostMessage(hWndServer, UWM_HCBT_DESTROYWND_ID, wParam, lParam);
 		break;
 	case HCBT_KEYSKIPPED:
 		PostMessage(hWndServer, UWM_HCBT_DESTROYWND_ID, wParam, lParam);
-		break;*/
+		break;
 	case HCBT_SYSCOMMAND:
 		PostMessage(hWndServer, UWM_HCBT_SYSCOMMAND_ID, wParam, lParam);
-		break;/*
+		break;
 	case HCBT_SETFOCUS:
 		PostMessage(hWndServer, UWM_HCBT_DESTROYWND_ID, wParam, lParam);
 		break;*/
@@ -239,10 +239,10 @@ static LRESULT CALLBACK ShellMsgProc(UINT nCode, WPARAM wParam, LPARAM lParam)
 		break;
 	case HSHELL_GETMINRECT:
 		PostMessage(hWndServer, UWM_HSHELL_WINDOWCREATED_ID, wParam, lParam);
-		break;*/
+		break;
 	case HSHELL_REDRAW:
 		PostMessage(hWndServer, UWM_HSHELL_REDRAW_ID, wParam, lParam);
-		break;/*
+		break;
 	case HSHELL_TASKMAN:
 		PostMessage(hWndServer, UWM_HSHELL_WINDOWCREATED_ID, wParam, lParam);
 		break;
