@@ -6,11 +6,9 @@
 #pragma data_seg(".HookDllSegment")
 HWND hWndServer = NULL;
 UINT UWM_HCBT_CREATEWND_ID = 0;
-UINT UWM_HCBT_ACTIVATEWND_ID = 0;
-UINT UWM_HCBT_SYSCOMMAND_ID = 0;
+UINT UWM_HCBT_DESTROYWND_ID = 0;
 UINT UWM_HSHELL_WINDOWCREATED_ID = 0;
-UINT UWM_HSHELL_REDRAW_ID = 0;
-UINT UWM_HSHELL_WINDOWREPLACED_ID = 0;
+UINT UWM_HSHELL_WINDOWDESTROYED_ID = 0;
 Hook_Info cbt_hook = {};
 Hook_Info shell_hook = {};
 #pragma data_seg()
@@ -37,17 +35,11 @@ BOOL APIENTRY DllMain(HINSTANCE hModule,
 		lpcwTemp = s2ws(UWM_HSHELL_WINDOWCREATED);
 		UWM_HSHELL_WINDOWCREATED_ID = ::RegisterWindowMessage(lpcwTemp.c_str());
 
-		/*lpcwTemp = s2ws(UWM_HCBT_ACTIVATE);
-		UWM_HCBT_ACTIVATEWND_ID = ::RegisterWindowMessage(lpcwTemp.c_str());
+		lpcwTemp = s2ws(UWM_HSHELL_WINDOWDESTROYED);
+        UWM_HSHELL_WINDOWCREATED_ID = ::RegisterWindowMessage(lpcwTemp.c_str());
 
-		lpcwTemp = s2ws(UWM_HCBT_SYSCOMMAND);
-		UWM_HCBT_SYSCOMMAND_ID = ::RegisterWindowMessage(lpcwTemp.c_str());		
-
-		lpcwTemp = s2ws(UWM_HSHELL_REDRAW);
-		UWM_HSHELL_REDRAW_ID = ::RegisterWindowMessage(lpcwTemp.c_str());
-
-		lpcwTemp = s2ws(UWM_HSHELL_WINDOWREPLACED);
-		UWM_HSHELL_WINDOWREPLACED_ID = ::RegisterWindowMessage(lpcwTemp.c_str());*/
+		lpcwTemp = s2ws(UWM_HCBT_DESTROYWND);
+        UWM_HSHELL_WINDOWDESTROYED_ID = ::RegisterWindowMessage(lpcwTemp.c_str());
 		break;
 		//**********************************************
 		// PROCESS_DETACH
@@ -59,13 +51,16 @@ BOOL APIENTRY DllMain(HINSTANCE hModule,
 	return TRUE;
 }
 
+//Install the hook onto the declared handle
 __declspec(dllexport) BOOL InstallHook(HWND hWndParent, HookId* hookInstallID)
 {
 	if (hWndServer != NULL && hWndServer != hWndParent)
 		return FALSE;
 
+	//Is hook within the max strings assigned 
 	if (*hookInstallID > UWM_WH_MINHOOK && *hookInstallID < UWM_WH_MAXHOOK)
 	{
+		//Check which hook is to be installed
 		switch (*hookInstallID)
 		{
 		case HookId::wh_cbt:
@@ -104,6 +99,7 @@ __declspec(dllexport) BOOL InstallHook(HWND hWndParent, HookId* hookInstallID)
 	return FALSE;
 }
 
+//Uninstall the hook
 __declspec(dllexport) BOOL UnInstallHook(HWND hWndParent, HookId* hookInstallID)
 {
 	BOOL unhooked = FALSE;
@@ -136,6 +132,7 @@ __declspec(dllexport) BOOL UnInstallHook(HWND hWndParent, HookId* hookInstallID)
 	return unhooked;
 }
 
+//Uninstall the hooks that were registered
 __declspec(dllexport) INT UnInstallAllHooks()
 {
 	INT unhooked = 0;
@@ -170,6 +167,7 @@ __declspec(dllexport) INT UnInstallAllHooks()
 	return unhooked;
 }
 
+//callback used for any registered CBT hook messages
 static LRESULT CALLBACK CBTMsgProc(UINT nCode, WPARAM wParam, LPARAM lParam)
 {
 	if (nCode < 0)
@@ -179,42 +177,20 @@ static LRESULT CALLBACK CBTMsgProc(UINT nCode, WPARAM wParam, LPARAM lParam)
 	}
 	switch (nCode)
 	{
-		/*case HCBT_MOVESIZE:
-			PostMessage(hWndServer, UWM_HCBT_MOVESIZE, wParam, lParam);
-			break;
-		case HCBT_MINMAX:
-			PostMessage(hWndServer, UWM_HCBT_MINMAX, wParam, lParam);
-			break;
-		case HCBT_QS:
-			PostMessage(hWndServer, UWM_HCBT_DESTROYWND_ID, wParam, lParam);
-			break;*/
+		
 	case HCBT_CREATEWND:
 		PostMessage(hWndServer, UWM_HCBT_CREATEWND_ID, wParam, lParam);
 		break;
-		/*case HCBT_DESTROYWND:
-			PostMessage(hWndServer, UWM_HCBT_DESTROYWND_ID, wParam, lParam);
-			break;
-	case HCBT_ACTIVATE:
-		PostMessage(hWndServer, UWM_HCBT_ACTIVATEWND_ID, wParam, lParam);
-		break;
-	case HCBT_CLICKSKIPPED:
+	case HCBT_DESTROYWND:
 		PostMessage(hWndServer, UWM_HCBT_DESTROYWND_ID, wParam, lParam);
-		break;
-	case HCBT_KEYSKIPPED:
-		PostMessage(hWndServer, UWM_HCBT_DESTROYWND_ID, wParam, lParam);
-		break;
-	case HCBT_SYSCOMMAND:
-		PostMessage(hWndServer, UWM_HCBT_SYSCOMMAND_ID, wParam, lParam);
-		break;
-	case HCBT_SETFOCUS:
-		PostMessage(hWndServer, UWM_HCBT_DESTROYWND_ID, wParam, lParam);
-		break;*/
+		break;   
 	default:
 		break;
 	}
 	return CallNextHookEx(cbt_hook.hook, nCode, wParam, lParam);
 }
 
+//callback used for any registered SHELL hook messages
 static LRESULT CALLBACK ShellMsgProc(UINT nCode, WPARAM wParam, LPARAM lParam)
 {
 	if (nCode < 0)
@@ -227,41 +203,16 @@ static LRESULT CALLBACK ShellMsgProc(UINT nCode, WPARAM wParam, LPARAM lParam)
 	case HSHELL_WINDOWCREATED:
 		PostMessage(hWndServer, UWM_HSHELL_WINDOWCREATED_ID, wParam, lParam);
 		break;
-	/*case HSHELL_WINDOWDESTROYED:
+	case HSHELL_WINDOWDESTROYED:
 		PostMessage(hWndServer, UWM_HSHELL_WINDOWDESTROYED_ID, wParam, lParam);
-		break;
-	case HSHELL_WINDOWREPLACED:
-		PostMessage(hWndServer, UWM_HSHELL_WINDOWREPLACED_ID, wParam, lParam);
-		break;*/
-#if(WINVER >= 0x0400)
-	/*case HSHELL_WINDOWACTIVATED:
-		PostMessage(hWndServer, UWM_HSHELL_WINDOWCREATED_ID, wParam, lParam);
-		break;
-	case HSHELL_GETMINRECT:
-		PostMessage(hWndServer, UWM_HSHELL_WINDOWCREATED_ID, wParam, lParam);
-		break;
-	case HSHELL_REDRAW:
-		PostMessage(hWndServer, UWM_HSHELL_REDRAW_ID, wParam, lParam);
-		break;
-	case HSHELL_TASKMAN:
-		PostMessage(hWndServer, UWM_HSHELL_WINDOWCREATED_ID, wParam, lParam);
-		break;
-	case HSHELL_LANGUAGE:
-		PostMessage(hWndServer, UWM_HSHELL_WINDOWCREATED_ID, wParam, lParam);
-		break;
-	case HSHELL_SYSMENU:
-		PostMessage(hWndServer, UWM_HSHELL_WINDOWCREATED_ID, wParam, lParam);
-		break;
-	case HSHELL_ENDTASK:
-		PostMessage(hWndServer, UWM_HSHELL_WINDOWCREATED_ID, wParam, lParam);
-		break;*/
-#endif
+		break;	
 	default:
 		break;
 	}
 	return CallNextHookEx(shell_hook.hook, nCode, wParam, lParam);
 }
 
+//Check if hook is already installed
 BOOL HookNotInstalled(Hook_Info hook)
 {
 	if (hook.hook != NULL && hook.hookID > 0) //Hook already installed
@@ -270,6 +221,7 @@ BOOL HookNotInstalled(Hook_Info hook)
 	return TRUE;
 }
 
+//Convert string to wide char version
 std::wstring s2ws(const std::string& s)
 {
 	std::wstring stemp;
